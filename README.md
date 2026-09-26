@@ -20,15 +20,23 @@ entre o número da bancada e o do manômetro é exatamente isso — não é erro
 
 ## Como usar
 
-Abra o `index.html` no navegador. Não precisa instalar nada, nem estar conectado.
+**No celular Android (instalar como app):**
+abra https://dogdosliinks-tech.github.io/covafog-bancada/ no Chrome e toque em
+**Instalar app** (no topo da bancada) ou no menu ⋮ → **Instalar app / Adicionar à tela inicial**.
+O ícone da Bancada aparece junto dos outros apps e funciona **sem internet** depois de instalado.
+
+**No computador:** abra o `index.html` no navegador. Não precisa instalar nada, nem estar conectado.
 
 ## Privacidade e segurança
 
 - Arquivo único, sem dependência externa: nenhum script, fonte ou imagem de terceiros.
-- Não usa `fetch`, `XMLHttpRequest`, cookies, `localStorage` ou `sessionStorage`.
+- Não usa `fetch`, `XMLHttpRequest`, cookies, `localStorage` ou `sessionStorage` no código da bancada.
+- O `sw.js` (service worker) só guarda em cache os arquivos do próprio app, para funcionar offline
+  depois de instalado. Não guarda nem envia nenhum dado de quem usa.
 - Não coleta, não armazena e não transmite dado nenhum. Tudo roda no navegador de quem abre.
 - A ficha de campo existe só enquanto a aba estiver aberta; copie ou imprima antes de fechar.
-- `Content-Security-Policy` declarada no próprio HTML bloqueia carregamento externo.
+- `Content-Security-Policy` declarada no próprio HTML bloqueia carregamento externo
+  (só libera arquivos do próprio site: manifesto, ícones e service worker).
 
 Se for modificar, mantenha essas características — é o que torna seguro publicar a página
 como site estático.

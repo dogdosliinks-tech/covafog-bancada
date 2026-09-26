@@ -4,10 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="Bancada de calculo para foguetes de garrafa PET com propulsao por vinagre e bicarbonato. Copa Vale do Aco de Foguetes.">
 <meta name="color-scheme" content="light">
+<meta name="theme-color" content="#10181d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>COVAFOG — Bancada de Cálculo</title>
 <!--
   COVAFOG — Bancada de Cálculo
@@ -202,6 +206,11 @@ ul.check li{margin-bottom:5px}
   header,.modos,.acao,.rack,#pSeg,.prog{display:none !important}
   .painel{border:1px solid #999;box-shadow:none}
 }
+.instalar{font-family:var(--disp);font-weight:700;font-size:.85rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:9px 16px;border:1px solid var(--brasa);border-radius:3px;
+  background:transparent;color:var(--brasa);cursor:pointer;line-height:1.2}
+.instalar:hover{background:var(--brasa);color:#fff}
+.instalar[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -216,6 +225,7 @@ ul.check li{margin-bottom:5px}
     <button data-modo="ar" aria-pressed="false">Ar comprimido</button>
     <button data-modo="conc" aria-pressed="false">Concentrar vinagre</button>
   </div>
+  <button class="instalar" id="instalar" hidden>Instalar app</button>
 </header>
 
 <main>
@@ -854,6 +864,20 @@ ul.check li{margin-bottom:5px}
   });
 
   render();
+})();
+</script>
+<script>
+/* Instalação como app (PWA). O service worker só guarda os arquivos do próprio app
+   para funcionar offline; não guarda nem envia nenhum dado de quem usa. */
+(function(){
+  if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+  var pedido=null, bt=document.getElementById('instalar');
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();pedido=e;bt.hidden=false;});
+  bt.addEventListener('click',function(){ if(!pedido) return; pedido.prompt();
+    pedido.userChoice.finally(function(){pedido=null;bt.hidden=true;}); });
+  window.addEventListener('appinstalled',function(){bt.hidden=true;});
 })();
 </script>
 </body>
