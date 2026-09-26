@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Bancada de calculo para foguetes de garrafa PET com propulsao por vinagre e bicarbonato. Copa Vale do Aco de Foguetes.">
+<meta name="color-scheme" content="light">
+<title>COVAFOG — Bancada de Cálculo</title>
+<!--
+  COVAFOG — Bancada de Cálculo
+  Ferramenta didática para foguetes de garrafa PET.
+
+  Arquivo único e offline por escolha de projeto:
+  não carrega script externo, não usa fetch/XHR, não grava nada no navegador
+  e não envia dado nenhum para lugar nenhum. Tudo roda na máquina de quem abre.
+  Se for alterar, mantenha assim — é o que torna seguro publicar como página estática.
+-->
+<style>
+:root{
+  /* aço do Vale + laranja de ignição — identidade COVAFOG */
+  --aco:#bcc6cc; --aco2:#a2b0b7; --placa:#f7f9fa; --placa2:#edf1f3;
+  --tinta:#10181d; --tinta2:#35444c; --tinta3:#57666e; --linha:#c6d0d6;
+  --corda:#ef7215; --azul:#2e6db4; --risco:#c1272d; --verde:#1d6b4f;
+  --brasa:#ef7215; --brasa2:#c85a08;
+  --disp:"Roboto Condensed","Arial Narrow","Helvetica Neue Condensed",system-ui,sans-serif;
+  --corpo:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --dado:ui-monospace,"Roboto Mono","DejaVu Sans Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--aco);
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.30) 0 1px,transparent 1px 6px);
+  color:var(--tinta);font-family:var(--corpo);font-size:14px;line-height:1.45;
+}
+
+/* ---------------- placa superior ---------------- */
+header{
+  background:linear-gradient(180deg,#162127,var(--tinta));color:var(--placa);
+  border-bottom:3px solid var(--brasa);
+  padding:12px 22px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+}
+header h1{font-family:var(--disp);font-weight:700;font-stretch:condensed;
+  font-size:1.7rem;letter-spacing:.07em;text-transform:uppercase;margin:0;line-height:1}
+header h1 .bn{color:var(--brasa);font-weight:400}
+header .sub{font-family:var(--dado);font-size:.66rem;letter-spacing:.13em;
+  text-transform:uppercase;color:#93a4ab;margin-top:4px}
+.modos{display:flex;margin-left:auto;border:1px solid #4a5a62;border-radius:3px;overflow:hidden}
+.modos button{font-family:var(--disp);font-weight:600;font-size:.85rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:9px 16px;border:0;border-right:1px solid #4a5a62;
+  background:transparent;color:#93a4ab;cursor:pointer;line-height:1.2}
+.modos button:last-child{border-right:0}
+.modos button[aria-pressed=true]{background:var(--brasa);color:#fff}
+.modos button:focus-visible{outline:2px solid var(--corda);outline-offset:-4px}
+
+/* ---------------- grade ---------------- */
+main{padding:18px 22px 40px;max-width:1500px;margin:0 auto}
+.bancada{display:grid;grid-template-columns:minmax(280px,1fr) minmax(340px,1.25fr) minmax(280px,1fr);
+  gap:16px;align-items:start}
+@media (max-width:1080px){.bancada{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.bancada{grid-template-columns:1fr}}
+
+.painel{background:var(--placa);border:1px solid var(--linha);border-radius:3px;
+  margin-bottom:16px;overflow:hidden;box-shadow:0 1px 0 #fff inset}
+.painel > h2{font-family:var(--disp);font-size:.78rem;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;margin:0;padding:9px 14px;color:var(--tinta3);
+  background:var(--placa2);border-bottom:1px solid var(--linha)}
+.painel .corpo{padding:13px 14px}
+[hidden]{display:none !important}
+
+/* ---------------- controles ---------------- */
+.ctl{margin-bottom:13px}
+.ctl:last-child{margin-bottom:0}
+.ctl label{display:block;font-size:.8rem;color:var(--tinta2);margin-bottom:5px}
+.linha{display:flex;align-items:center;gap:9px}
+.linha input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;
+  height:22px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--aco2);border-radius:2px}
+input[type=range]::-moz-range-track{height:4px;background:var(--aco2);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;
+  border-radius:50%;background:var(--corda);border:2.5px solid var(--tinta);margin-top:-6.5px;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+  background:var(--corda);border:2.5px solid var(--tinta);cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--azul);outline-offset:3px}
+input[type=number]{width:74px;font-family:var(--dado);font-size:.9rem;font-weight:600;
+  text-align:right;padding:5px 7px;border:1px solid var(--aco2);border-radius:2px;
+  background:#fff;color:var(--tinta)}
+input[type=number]:focus-visible{outline:2px solid var(--azul);outline-offset:1px}
+.un{font-family:var(--dado);font-size:.75rem;color:var(--tinta3);width:38px}
+.seg{display:flex;gap:5px;flex-wrap:wrap}
+.seg button{flex:1 1 auto;font-family:var(--disp);font-size:.8rem;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;padding:7px 5px;border:1px solid var(--aco2);
+  background:#fff;color:var(--tinta3);border-radius:2px;cursor:pointer;min-width:56px}
+.seg button[aria-pressed=true]{background:var(--tinta);color:var(--placa);border-color:var(--tinta)}
+.seg button:focus-visible{outline:2px solid var(--azul);outline-offset:1px}
+
+/* ---------------- instrumento ---------------- */
+svg.dial{display:block;width:100%;height:auto;max-width:400px;margin:0 auto}
+.agulha{transition:transform .5s cubic-bezier(.32,.72,.28,1);transform-origin:170px 170px}
+@media (prefers-reduced-motion:reduce){.agulha{transition:none}}
+.leitura{display:flex;justify-content:center;align-items:baseline;gap:12px;
+  margin:2px 0 12px;flex-wrap:wrap}
+.leitura .n{font-family:var(--dado);font-weight:600;font-size:3rem;letter-spacing:-.03em;line-height:1}
+.leitura .u{font-family:var(--disp);font-size:1rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--tinta3)}
+.leitura .teto{font-family:var(--dado);font-size:.82rem;color:var(--tinta3);
+  border-left:1px solid var(--linha);padding-left:12px}
+.legenda{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-family:var(--dado);
+  font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--tinta3);
+  border-top:1px solid var(--linha);padding:9px 0 2px}
+.legenda i{display:inline-block;width:15px;height:0;vertical-align:middle;margin-right:6px}
+.l-real{border-top:3px solid var(--tinta)} .l-teto{border-top:3px dashed var(--azul)}
+.folga{background:#fdf0e4;border:1px solid var(--brasa);border-radius:3px;
+  padding:9px 12px;margin-top:12px;font-size:.83rem;line-height:1.4}
+.folga b{font-family:var(--dado);font-weight:600}
+
+.prog{margin:2px 0 10px}
+.progBar{height:15px;background:var(--placa2);border:1px solid var(--linha);
+  border-radius:8px;overflow:hidden}
+.progBar i{display:block;height:100%;width:0;
+  background:linear-gradient(90deg,var(--brasa2),var(--brasa));transition:width .45s ease}
+.progRot{font-family:var(--dado);font-size:.72rem;color:var(--tinta3);
+  text-align:center;margin-top:5px;letter-spacing:.04em}
+.alerta{margin-top:11px;border:2px solid var(--risco);background:#fdeaea;
+  border-radius:3px;padding:11px 13px}
+.alerta b{display:block;font-family:var(--disp);font-size:.9rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--risco);margin-bottom:3px}
+.alerta span{font-size:.84rem;line-height:1.45;display:block}
+@media (prefers-reduced-motion:reduce){.progBar i{transition:none}}
+
+/* ---------------- tabela ---------------- */
+table.saida{width:100%;border-collapse:collapse;font-size:.82rem}
+table.saida th,table.saida td{padding:6px 0;border-bottom:1px solid var(--linha);vertical-align:baseline}
+table.saida th{font-weight:400;color:var(--tinta3);text-align:left}
+table.saida td{font-family:var(--dado);font-weight:500;text-align:right;white-space:nowrap}
+table.saida tr:last-child th,table.saida tr:last-child td{border-bottom:0}
+td .sub{font-family:var(--corpo);font-size:.72rem;color:var(--tinta3);display:block;font-weight:400}
+tr.destaque th{color:var(--tinta);font-weight:600}
+tr.destaque td{font-size:1.02rem;font-weight:600}
+tr.destaque th,tr.destaque td{background:#eef7f1;border-bottom:2px solid var(--verde)}
+
+/* ---------------- avisos ---------------- */
+.aviso{border-left:4px solid var(--risco);background:#fff;border:1px solid var(--linha);
+  border-left-width:4px;padding:8px 11px;margin-bottom:7px;font-size:.81rem;border-radius:0 3px 3px 0}
+.aviso.ok{border-left-color:var(--verde)} .aviso.nota{border-left-color:var(--azul)}
+.aviso b{display:block;font-family:var(--disp);font-size:.76rem;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:2px}
+
+/* ---------------- botões ---------------- */
+.acao{display:flex;gap:8px;flex-wrap:wrap}
+button.bt{font-family:var(--disp);font-weight:600;font-size:.82rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:9px 14px;border:1px solid var(--brasa2);
+  background:var(--brasa);color:#fff;border-radius:2px;cursor:pointer}
+button.bt.sec{background:#fff;color:var(--tinta3);border-color:var(--aco2)}
+button.bt:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
+
+/* ---------------- bancada de comparação ---------------- */
+.rack{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 8px}
+.carta{flex:0 0 218px;background:#fff;border:1px solid var(--linha);border-radius:3px;
+  padding:11px 12px;position:relative}
+.carta.lider{border-color:var(--verde);box-shadow:0 0 0 2px rgba(29,107,79,.16)}
+.carta .pos{font-family:var(--disp);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tinta3)}
+.carta.lider .pos{color:var(--verde);font-weight:700}
+.carta .cfg{font-family:var(--dado);font-size:.74rem;color:var(--tinta2);margin:3px 0 8px;
+  line-height:1.35;min-height:2.5em}
+.carta .psi{font-family:var(--dado);font-size:1.5rem;font-weight:600;line-height:1}
+.carta .psiu{font-family:var(--disp);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--tinta3);margin-left:4px}
+.barra{height:7px;background:var(--placa2);border-radius:4px;margin:9px 0 4px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--verde)}
+.carta .idx{font-family:var(--dado);font-size:.72rem;color:var(--tinta3)}
+.carta .x{position:absolute;top:6px;right:7px;border:0;background:transparent;
+  color:var(--aco2);font-size:1.1rem;line-height:1;cursor:pointer;padding:2px 5px}
+.carta .x:hover{color:var(--risco)}
+.vazio{font-size:.83rem;color:var(--tinta3);padding:14px 2px}
+
+/* ---------------- ficha ---------------- */
+table.log{width:100%;border-collapse:collapse;font-family:var(--dado);font-size:.78rem}
+table.log th{font-family:var(--corpo);font-size:.72rem;color:var(--tinta3);text-align:left;
+  border-bottom:1px solid var(--linha);padding:5px 6px;font-weight:500}
+table.log td{padding:6px;border-bottom:1px solid #e7edef}
+table.log td:nth-child(n+3){text-align:right}
+ul.check{margin:0;padding-left:1.1rem;font-size:.83rem}
+ul.check li{margin-bottom:5px}
+.apoio{background:#fff;border:1px solid var(--linha);border-left:4px solid var(--corda);
+  border-radius:0 3px 3px 0;padding:12px 14px;margin-top:10px}
+.apoio p{margin:0 0 10px;font-size:.86rem;line-height:1.5}
+.apoio .chave{display:flex;align-items:center;gap:8px;background:var(--placa2);
+  border:1px solid var(--linha);border-radius:3px;padding:9px 11px;margin-bottom:9px}
+.apoio .chave code{font-family:var(--dado);font-size:.84rem;flex:1;word-break:break-all;color:var(--tinta)}
+.apoio small{display:block;font-size:.76rem;color:var(--tinta3);line-height:1.45;margin-top:8px}
+.rodape{font-size:.76rem;color:#4b5a61;line-height:1.5;border-top:1px solid var(--aco2);
+  padding-top:12px;margin-top:6px}
+.assina{font-family:var(--disp);font-size:.95rem;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--tinta);margin-bottom:5px}
+@media print{
+  body{background:#fff}
+  header,.modos,.acao,.rack,#pSeg,.prog{display:none !important}
+  .painel{border:1px solid #999;box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>COVAFOG <span class="bn">Bancada</span></h1>
+    <div class="sub">Copa Vale do Aço de Foguetes · cálculo de carga</div>
+  </div>
+  <div class="modos" id="modos" role="group" aria-label="Tipo de cálculo">
+    <button data-modo="quim" aria-pressed="true">Vinagre + bicarbonato</button>
+    <button data-modo="ar" aria-pressed="false">Ar comprimido</button>
+    <button data-modo="conc" aria-pressed="false">Concentrar vinagre</button>
+  </div>
+</header>
+
+<main>
+<div class="bancada">
+
+  <!-- ================= COLUNA 1 ================= -->
+  <div>
+    <div class="painel" id="pQuim">
+      <h2>Carga química</h2>
+      <div class="corpo">
+        <div class="ctl"><label for="liq">Vinagre</label><div class="linha">
+          <input type="range" id="liq" min="100" max="2000" step="25" value="750">
+          <input type="number" id="liqN" min="100" max="2000" step="25" value="750"><span class="un">mL</span>
+        </div></div>
+        <div class="ctl"><label for="acid">Acidez do vinagre</label><div class="linha">
+          <input type="range" id="acid" min="4" max="8" step="0.1" value="8">
+          <input type="number" id="acidN" min="4" max="8" step="0.1" value="8.0"><span class="un">%</span>
+        </div></div>
+        <div class="ctl"><label for="bic">Bicarbonato</label><div class="linha">
+          <input type="range" id="bic" min="5" max="300" step="1" value="90">
+          <input type="number" id="bicN" min="5" max="300" step="1" value="90"><span class="un">g</span>
+        </div></div>
+        <div class="ctl"><label for="temp">Temperatura do vinagre</label><div class="linha">
+          <input type="range" id="temp" min="10" max="40" step="1" value="25">
+          <input type="number" id="tempN" min="10" max="40" step="1" value="25"><span class="un">°C</span>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="painel" id="pAr" hidden>
+      <h2>Carga de ar comprimido</h2>
+      <div class="corpo">
+        <div class="ctl"><label for="bomba">Pressão da bomba</label><div class="linha">
+          <input type="range" id="bomba" min="20" max="250" step="5" value="100">
+          <input type="number" id="bombaN" min="20" max="250" step="5" value="100"><span class="un">psi</span>
+        </div></div>
+        <div class="ctl"><label for="agua">Água na garrafa</label><div class="linha">
+          <input type="range" id="agua" min="50" max="2000" step="25" value="600">
+          <input type="number" id="aguaN" min="50" max="2000" step="25" value="600"><span class="un">mL</span>
+        </div></div>
+        <div class="ctl"><label for="npoli">Expoente politrópico</label><div class="linha">
+          <input type="range" id="npoli" min="1" max="1.4" step="0.01" value="1.15">
+          <input type="number" id="npoliN" min="1" max="1.4" step="0.01" value="1.15"><span class="un">n</span>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="painel" id="pConc" hidden>
+      <h2>Concentração por redução</h2>
+      <div class="corpo">
+        <div class="ctl"><label for="cVi">Volume inicial</label><div class="linha">
+          <input type="range" id="cVi" min="100" max="4000" step="50" value="1000">
+          <input type="number" id="cViN" min="100" max="4000" step="50" value="1000"><span class="un">mL</span>
+        </div></div>
+        <div class="ctl"><label for="cCi">Acidez inicial</label><div class="linha">
+          <input type="range" id="cCi" min="1" max="15" step="0.5" value="4">
+          <input type="number" id="cCiN" min="1" max="15" step="0.5" value="4"><span class="un">%</span>
+        </div></div>
+        <div class="ctl"><label for="cVf">Volume após a fervura</label><div class="linha">
+          <input type="range" id="cVf" min="50" max="4000" step="25" value="500">
+          <input type="number" id="cVfN" min="50" max="4000" step="25" value="500"><span class="un">mL</span>
+        </div></div>
+        <div class="ctl"><label for="cRet">Ácido conservado</label><div class="linha">
+          <input type="range" id="cRet" min="60" max="100" step="1" value="95">
+          <input type="number" id="cRetN" min="60" max="100" step="1" value="95"><span class="un">%</span>
+        </div></div>
+        <div class="ctl"><label for="cTax">Taxa de evaporação medida</label><div class="linha">
+          <input type="range" id="cTax" min="1" max="60" step="1" value="8">
+          <input type="number" id="cTaxN" min="1" max="60" step="1" value="8"><span class="un">mL/min</span>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="painel" id="pMed">
+      <h2>Leitura do manômetro</h2>
+      <div class="corpo">
+        <div class="ctl"><label for="med">Pressão que o manômetro está marcando agora</label>
+          <div class="linha">
+          <input type="range" id="med" min="0" max="250" step="1" value="0">
+          <input type="number" id="medN" min="0" max="250" step="1" value="0"><span class="un">psi</span>
+        </div></div>
+        <p style="font-size:.79rem;color:var(--tinta3);margin:0">
+          Deixe em 0 antes do tiro. Durante a reação, ajuste conforme o manômetro sobe:
+          a bancada mostra quanto ainda falta para a reação terminar.</p>
+      </div>
+    </div>
+
+    <div class="painel" id="pGar">
+      <h2>Garrafa</h2>
+      <div class="corpo">
+        <div class="ctl"><label>Volume</label>
+          <div class="seg" id="garrafa">
+            <button data-g="1000">1 L</button>
+            <button data-g="1500" aria-pressed="true">1,5 L</button>
+            <button data-g="2000">2 L</button>
+            <button data-g="2500">2,5 L</button>
+          </div></div>
+        <div class="ctl"><label for="lim">Pressão que a garrafa aguenta</label><div class="linha">
+          <input type="range" id="lim" min="80" max="300" step="5" value="200">
+          <input type="number" id="limN" min="80" max="300" step="5" value="200"><span class="un">psi</span>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLUNA 2 ================= -->
+  <div>
+    <div class="painel" id="pInstr">
+      <h2>Manômetro</h2>
+      <div class="corpo">
+        <svg class="dial" viewBox="0 0 340 250" role="img" aria-labelledby="dt">
+          <title id="dt">Mostrador de pressão</title>
+          <circle cx="170" cy="170" r="146" fill="#fff" stroke="#c9d3d8"/>
+          <circle cx="170" cy="170" r="139" fill="none" stroke="#e5ebee"/>
+          <path id="zonaRisco" fill="none" stroke="#c1272d" stroke-width="11" opacity=".85"/>
+          <g id="marcas"></g><g id="numeros"></g>
+          <text x="170" y="118" text-anchor="middle" font-family="Roboto Condensed,Arial Narrow,sans-serif"
+                font-size="13" letter-spacing="2.6" fill="#5c6b72">PSI</text>
+          <g class="agulha" id="agTeto">
+            <line x1="170" y1="170" x2="170" y2="52" stroke="#2e6db4" stroke-width="2.5" stroke-dasharray="7 5"/>
+          </g>
+          <g class="agulha" id="agReal"><polygon points="170,46 175,172 165,172" fill="#151d21"/></g>
+          <circle cx="170" cy="170" r="12" fill="#151d21"/>
+          <circle cx="170" cy="170" r="4.5" fill="#f2b705"/>
+        </svg>
+        <div class="leitura">
+          <span class="n" id="psiTeto">—</span>
+          <span class="u" id="psiRot">psi que a reação alcança</span>
+          <span class="teto"><span id="tetoRot">no manômetro</span> <b id="psiReal">—</b></span>
+        </div>
+        <div class="prog" id="progBox">
+          <div class="progBar"><i id="progFill"></i></div>
+          <div class="progRot"><span id="progTxt">—</span></div>
+        </div>
+        <div class="legenda">
+          <span><i class="l-teto"></i><span id="legTeto">onde a reação pode chegar</span></span>
+          <span><i class="l-real"></i><span id="legReal">lido no manômetro</span></span>
+        </div>
+        <div class="folga" id="folga"></div>
+        <div class="alerta" id="alertaLim" hidden></div>
+        <div class="acao" style="margin-top:12px">
+          <button class="bt" id="btGuardar">Guardar esta carga</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="painel" id="pConcOut" hidden>
+      <h2>Resultado da redução</h2>
+      <div class="corpo">
+        <div class="leitura" style="margin-top:6px">
+          <span class="n" id="cOutN">—</span>
+          <span class="u">de acidez final</span>
+        </div>
+        <table class="saida">
+          <tr><th>Fator de concentração</th><td id="cFat">—</td></tr>
+          <tr><th>Ácido acético conservado</th><td id="cMas">—</td></tr>
+          <tr><th>Água a evaporar</th><td id="cEva">—</td></tr>
+          <tr><th>Tempo estimado de fervura</th><td id="cTem">—</td></tr>
+          <tr class="destaque"><th>Bicarbonato para esta carga</th><td id="cBic">—</td></tr>
+        </table>
+        <div class="acao" style="margin-top:12px">
+          <button class="bt" id="cAplicar">Usar esta acidez no cálculo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="painel" id="pBase">
+      <h2>Base de lançamento</h2>
+      <div class="corpo">
+        <div class="ctl"><label for="cano">Cano pressurizado</label><div class="linha">
+          <input type="range" id="cano" min="0" max="250" step="0.5" value="80.3">
+          <input type="number" id="canoN" min="0" max="250" step="0.5" value="80.3"><span class="un">cm</span>
+        </div></div>
+        <div class="ctl"><label>Bitola do cano</label>
+          <div class="seg" id="bitola">
+            <button data-d="15.7">½" rosc.</button>
+            <button data-d="17" aria-pressed="true">½" sold.</button>
+            <button data-d="21.6">¾" sold.</button>
+          </div></div>
+        <div class="ctl"><label for="con">Válvulas e conexões</label><div class="linha">
+          <input type="range" id="con" min="0" max="100" step="1" value="18">
+          <input type="number" id="conN" min="0" max="100" step="1" value="18"><span class="un">mL</span>
+        </div></div>
+        <div class="ctl"><label for="seco">Massa seca do foguete</label><div class="linha">
+          <input type="range" id="seco" min="40" max="600" step="2" value="198">
+          <input type="number" id="secoN" min="40" max="600" step="2" value="198"><span class="un">g</span>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLUNA 3 ================= -->
+  <div>
+    <div class="painel" id="pNum">
+      <h2>Números da carga</h2>
+      <div class="corpo">
+        <table class="saida">
+          <tr id="rAcid"><th>Ácido acético</th><td id="oAcid">—</td></tr>
+          <tr id="rCO2"><th>CO₂ gerado</th><td id="oCO2">—</td></tr>
+          <tr id="rStoi"><th>Bicarbonato ideal</th><td id="oStoi">—</td></tr>
+          <tr><th>Espaço de gás</th><td id="oGas">—</td></tr>
+          <tr><th>Volume morto do cano</th><td id="oMorto">—</td></tr>
+          <tr><th>Enchimento da garrafa</th><td id="oEnch">—</td></tr>
+          <tr><th>Massa no lançamento</th><td id="oMassa">—</td></tr>
+          <tr><th>Energia de expansão</th><td id="oEner">—</td></tr>
+          <tr class="destaque"><th>Índice de desempenho</th><td id="oEsp">—</td></tr>
+        </table>
+      </div>
+    </div>
+    <div id="avisos"></div>
+  </div>
+</div>
+
+<!-- ================= BANCADA DE COMPARAÇÃO ================= -->
+<div class="painel" id="pRack">
+  <h2>Cargas guardadas</h2>
+  <div class="corpo">
+    <div class="rack" id="rack"><p class="vazio">Nenhuma carga guardada. Monte uma configuração
+      e use <b>Guardar esta carga</b> para compará-la com outras aqui.</p></div>
+    <div class="acao" style="margin-top:6px">
+      <button class="bt sec" id="btLimparRack">Limpar bancada</button>
+    </div>
+  </div>
+</div>
+
+<div class="bancada" style="grid-template-columns:1.6fr 1fr">
+  <div class="painel" id="pFicha">
+    <h2>Ficha de campo</h2>
+    <div class="corpo">
+      <table class="log">
+        <thead><tr><th>#</th><th>Configuração</th><th>psi</th><th>Alcance</th><th>Índice</th></tr></thead>
+        <tbody id="corpoLog"><tr><td colspan="5" class="vazio">Nenhum tiro registrado</td></tr></tbody>
+      </table>
+      <div class="acao" style="margin-top:12px">
+        <button class="bt" id="btAdd">Registrar tiro</button>
+        <button class="bt sec" id="btCopy">Copiar ficha</button>
+        <button class="bt sec" id="btImp">Imprimir</button>
+        <button class="bt sec" id="btClear">Limpar</button>
+      </div>
+      <p style="font-size:.77rem;color:var(--tinta3);margin:10px 0 0">
+        A ficha vale enquanto esta janela estiver aberta. Copie ou imprima antes de fechar.</p>
+    </div>
+  </div>
+
+  <div class="painel" id="pSeg">
+    <h2>Antes de cada tiro</h2>
+    <div class="corpo">
+      <ul class="check">
+        <li>Garrafa sem arranhões ou trincas. Garrafa nova para pressão alta.</li>
+        <li>Todos atrás do anteparo antes de pressurizar; acionamento só por corda.</li>
+        <li>Ninguém à frente da base nem na linha de voo.</li>
+        <li>Óculos de proteção em quem carrega e monta.</li>
+        <li>Nunca aproximar o rosto de garrafa pressurizada.</li>
+        <li>Passando do previsto, alivie pela válvula antes de mexer na base.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="painel">
+  <h2>Como a bancada calcula</h2>
+  <div class="corpo" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div>
+      <p style="margin:0 0 9px;font-size:.86rem;line-height:1.5">
+        A reação é um para um em mol: cada mol de ácido acético consome um de bicarbonato
+        e devolve um de CO₂. A bancada calcula os dois lados, usa o menor como limitante
+        e converte em pressão pela lei dos gases, descontando o CO₂ que fica dissolvido
+        no líquido pela lei de Henry corrigida pela temperatura.</p>
+      <p style="margin:0;font-size:.86rem;line-height:1.5">
+        O espaço de gás inclui o cano da base, não só a folga da garrafa. Em base de meia
+        polegada esse volume morto passa de 10% do total e muda bastante o resultado —
+        meça o seu cano antes de confiar no número.</p>
+    </div>
+    <div class="apoio" style="margin-top:0">
+      <p><b>Por que o manômetro marca menos que a bancada.</b> O número grande é onde a reação
+        pode chegar, não onde ela está. Quando a camisinha estoura, o bicarbonato tende a
+        empedrar e a reação trava no meio do caminho. Agitar quebra essa crosta e libera o
+        resto do CO₂.</p>
+      <p style="margin-bottom:0">Por isso a barra: ela mostra quanto da reação já saiu do
+        líquido. Agite em ciclos até o ganho por ciclo cair abaixo de 5 psi — daí em diante
+        não vem mais nada e insistir só desperdiça tempo de bancada.</p>
+    </div>
+  </div>
+</div>
+
+<p class="rodape">
+  <span class="assina">COVAFOG · Copa Vale do Aço de Foguetes</span>
+  Bancada de cálculo para foguetes de garrafa em competições escolares. Desenvolvida por
+  Prof. Breno Reis. Os valores são estimativas para uso didático supervisionado, não leituras
+  de instrumento — confira sempre no manômetro da base. O modo químico reparte o CO₂ entre gás
+  e líquido pela lei de Henry corrigida pela temperatura; o modo de ar usa expansão politrópica.
+  Não há estimativa de alcance: distância depende de arrasto, vento e estabilidade, que nenhuma
+  conta simples resolve — registre o alcance real na ficha e compare pelos seus próprios números.
+  <br><br>Página estática e offline: não coleta, não armazena e não transmite dado nenhum.
+</p>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var S = {modo:"quim", liq:750, acidez:8, bic:90, temp:25, med:0,
+           bomba:100, agua:600, npoli:1.15, garrafa:1500, lim:200,
+           cano:80.3, bitola:17, con:18, seco:198,
+           cVi:1000, cCi:4, cVf:500, cRet:95, cTax:8};
+  var MMA=60.05, MMB=84.01, PSI=14.696, MAX=250, ATM=101325, R=0.082057;
+  var n1=function(x){return x.toFixed(1).replace(".",",");},
+      n2=function(x){return x.toFixed(2).replace(".",",");},
+      g=function(id){return document.getElementById(id);};
+
+  function calcular(){
+    var raio=S.bitola/20, morto=Math.PI*raio*raio*S.cano+S.con;
+    var liq=(S.modo==="ar")?S.agua:S.liq;
+    var vazio=Math.max(S.garrafa-liq,0), vGas=vazio+morto;
+    var r={morto:morto,liquido:liq,vazio:vazio,vGas:vGas};
+    if(S.modo!=="ar"){
+      r.gAcido=liq*S.acidez/100; r.nAcido=r.gAcido/MMA;
+      var nb=S.bic/MMB;
+      r.nCO2=Math.min(r.nAcido,nb);
+      r.limitante=r.nAcido<=nb?"vinagre":"bicarbonato";
+      r.stoich=r.nAcido*MMB; r.excesso=S.bic-r.stoich;
+      var T=S.temp+273.15;
+      var kg=(vGas/1000)/(R*T), kh=0.034*Math.exp(2400*(1/T-1/298.15));
+      // teto = pressao de equilibrio com a reacao completa, ja descontado o CO2 dissolvido.
+      // Nao ha fator de rendimento: o que o manometro marca a menos e reacao que ainda
+      // nao saiu do liquido, e o aluno recupera agitando.
+      r.psiTeto=r.nCO2/(kg+kh*liq/1000)*PSI;
+      r.psiReal=Math.min(S.med,MAX);
+    } else {
+      r.psiReal=S.bomba;
+      var V0=vGas/1000, V1=(S.garrafa+morto)/1000, P0=S.bomba/PSI+1;
+      r.pFim=(P0*Math.pow(V0/V1,S.npoli)-1)*PSI;
+      r.psiTeto=Math.max(r.pFim,0);
+    }
+    // energia e indice usam o teto no modo quimico (potencial da carga montada)
+    var pRef=(S.modo==="ar")?r.psiReal:r.psiTeto;
+    var n=(S.modo==="ar")?S.npoli:1.15;
+    var V0m=vGas/1e6, V1m=(S.garrafa+morto)/1e6;
+    var P0p=(pRef/PSI+1)*ATM, P1p=P0p*Math.pow(V0m/V1m,n);
+    r.energia=Math.max(Math.abs(n-1)>1e-6?(P0p*V0m-P1p*V1m)/(n-1):P0p*V0m*Math.log(V1m/V0m),0);
+    r.massa=S.seco+liq*1.005+(S.modo==="ar"?0:S.bic);
+    r.espec=r.energia/(r.massa/1000);
+    r.ench=S.garrafa>0?liq/S.garrafa*100:0;
+    return r;
+  }
+
+  function calcConc(){
+    var mIni=S.cVi*S.cCi/100, mFim=mIni*S.cRet/100;
+    var cFim=S.cVf>0?mFim/S.cVf*100:0;
+    return {mIni:mIni, mFim:mFim, cFim:cFim,
+            fator:S.cCi>0?cFim/S.cCi:0,
+            evap:Math.max(S.cVi-S.cVf,0),
+            tempo:S.cTax>0?Math.max(S.cVi-S.cVf,0)/S.cTax:0,
+            bic:mFim/MMA*MMB};
+  }
+
+  // ---------------- mostrador ----------------
+  var A0=-125,A1=125;
+  function ang(p){return A0+Math.max(0,Math.min(1,p/MAX))*(A1-A0);}
+  function pol(cx,cy,rr,a){var t=(a-90)*Math.PI/180;return [cx+rr*Math.cos(t),cy+rr*Math.sin(t)];}
+  (function(){
+    var m=g("marcas"), nn=g("numeros");
+    for(var p=0;p<=MAX;p+=12.5){
+      var mai=(p%50===0), a=ang(p), p1=pol(170,170,mai?114:122,a), p2=pol(170,170,130,a);
+      var l=document.createElementNS("http://www.w3.org/2000/svg","line");
+      l.setAttribute("x1",p1[0].toFixed(1)); l.setAttribute("y1",p1[1].toFixed(1));
+      l.setAttribute("x2",p2[0].toFixed(1)); l.setAttribute("y2",p2[1].toFixed(1));
+      l.setAttribute("stroke",mai?"#151d21":"#9fadb4");
+      l.setAttribute("stroke-width",mai?"2.4":"1.2"); m.appendChild(l);
+      if(mai){
+        var pt=pol(170,170,96,a);
+        var t=document.createElementNS("http://www.w3.org/2000/svg","text");
+        t.setAttribute("x",pt[0].toFixed(1)); t.setAttribute("y",(pt[1]+5).toFixed(1));
+        t.setAttribute("text-anchor","middle");
+        t.setAttribute("font-family","ui-monospace,monospace");
+        t.setAttribute("font-size","15"); t.setAttribute("fill","#151d21");
+        t.textContent=p; nn.appendChild(t);
+      }
+    }
+  })();
+  function zona(l){
+    var el=g("zonaRisco");
+    if(l>=MAX){el.setAttribute("d","");return;}
+    var a=ang(l),b=ang(MAX),p1=pol(170,170,134,a),p2=pol(170,170,134,b);
+    el.setAttribute("d","M "+p1[0].toFixed(1)+" "+p1[1].toFixed(1)+
+      " A 134 134 0 "+((b-a)>180?1:0)+" 1 "+p2[0].toFixed(1)+" "+p2[1].toFixed(1));
+  }
+
+  function avisos(r){
+    var o=[];
+    if(S.modo==="quim"){
+      if(r.excesso>r.stoich*0.10) o.push(["","Bicarbonato sobrando",
+        "Sobram "+Math.round(r.excesso)+" g que não viram gás. O ideal é "+
+        Math.round(r.stoich*1.06)+" g."]);
+      if(r.limitante==="bicarbonato") o.push(["nota","Falta bicarbonato",
+        "O bicarbonato limita a reação. Suba para "+Math.round(r.stoich*1.06)+" g."]);
+      if(S.temp<20) o.push(["nota","Vinagre frio",
+        "A "+S.temp+" °C o CO₂ fica mais dissolvido e a reação anda devagar."]);
+    } else if(S.modo==="ar"){
+      if(S.bomba>S.lim) o.push(["","Bomba acima do limite",
+        "Pressurizando a "+S.bomba+" psi numa garrafa de "+S.lim+" psi."]);
+      if(r.ench<25||r.ench>45) o.push(["nota","Enchimento fora da faixa",
+        Math.round(r.ench)+"% de água. A faixa que costuma render mais é 30 a 40%."]);
+    }
+    if(r.ench>50) o.push(["nota","Garrafa muito cheia",
+      Math.round(r.ench)+"% de enchimento sobra pouco espaço de expansão."]);
+    if(!o.length) o.push(["ok","Carga equilibrada",
+      "Dosagem, enchimento e pressão dentro da faixa."]);
+    g("avisos").innerHTML=o.map(function(a){
+      return '<div class="aviso '+a[0]+'"><b>'+a[1]+'</b>'+a[2]+'</div>';}).join("");
+  }
+
+  function avisosConc(){
+    var c=calcConc(), o=[];
+    if(S.cVf>=S.cVi) o.push(["nota","Sem redução",
+      "O volume final é igual ou maior que o inicial."]);
+    if(c.cFim>20) o.push(["","Concentração alta",
+      "Acima de 20% os vapores ficam bastante irritantes e a perda de ácido cresce. "+
+      "Trabalhe ao ar livre."]);
+    if(S.cVf<S.cVi*0.25&&S.cVf<S.cVi) o.push(["nota","Redução agressiva",
+      "Reduzir a menos de um quarto exige fervura prolongada e aumenta a perda de ácido."]);
+    if(!o.length) o.push(["ok","Redução viável",
+      "Meça o volume com proveta ao fim da fervura e ajuste o campo com o valor real."]);
+    g("avisos").innerHTML=o.map(function(a){
+      return '<div class="aviso '+a[0]+'"><b>'+a[1]+'</b>'+a[2]+'</div>';}).join("");
+  }
+
+  function render(){
+    var conc=(S.modo==="conc"), ar=(S.modo==="ar");
+    g("pQuim").hidden=(S.modo!=="quim"); g("pAr").hidden=!ar; g("pConc").hidden=!conc;
+    ["pInstr","pNum","pRack","pFicha","pGar"].forEach(function(id){g(id).hidden=conc;});
+    g("pMed").hidden=(S.modo!=="quim");
+    g("pBase").hidden=conc; g("pConcOut").hidden=!conc;
+
+    if(conc){
+      var c=calcConc();
+      g("cOutN").textContent=n1(c.cFim)+"%";
+      g("cFat").innerHTML=n2(c.fator)+"&#215;<span class='sub'>partindo de "+n1(S.cCi)+"%</span>";
+      g("cMas").innerHTML=n1(c.mFim)+" g<span class='sub'>de "+n1(c.mIni)+" g iniciais</span>";
+      g("cEva").innerHTML=Math.round(c.evap)+" mL";
+      g("cTem").innerHTML=Math.round(c.tempo)+" min<span class='sub'>a "+S.cTax+" mL/min</span>";
+      g("cBic").innerHTML=Math.round(c.bic*1.06)+" g<span class='sub'>estequiométrico "+
+        Math.round(c.bic)+" g + 6%</span>";
+      avisosConc(); return;
+    }
+
+    var r=calcular(), q=(S.modo==="quim");
+    var alvo=q?r.psiTeto:r.psiReal, lido=q?r.psiReal:r.pFim;
+    g("psiTeto").textContent=Math.round(alvo);
+    g("psiReal").textContent=Math.round(lido)+" psi";
+    g("agTeto").style.transform="rotate("+ang(alvo)+"deg)";
+    g("agReal").style.transform="rotate("+ang(lido)+"deg)";
+    zona(S.lim);
+    g("psiRot").textContent=q?"psi que a reação alcança":"psi na bomba";
+    g("tetoRot").textContent=q?"no manômetro":"no fim";
+    g("legTeto").textContent=q?"onde a reação pode chegar":"pressão da bomba";
+    g("legReal").textContent=q?"lido no manômetro":"quando a água acaba";
+
+    // barra: quanto da reação já saiu do líquido
+    g("progBox").hidden=!q;
+    if(q){
+      var pc=r.psiTeto>0?Math.max(0,Math.min(100,S.med/r.psiTeto*100)):0;
+      g("progFill").style.width=pc.toFixed(0)+"%";
+      g("progTxt").textContent=S.med<=0
+        ? "aguardando a leitura do manômetro"
+        : Math.round(pc)+"% da reação liberada · faltam "+
+          Math.max(0,Math.round(r.psiTeto-S.med))+" psi";
+    }
+
+    if(q){
+      var falta=r.psiTeto-S.med;
+      g("folga").innerHTML = S.med<=0
+        ? "Esta carga pode chegar a <b>"+Math.round(r.psiTeto)+" psi</b>. Informe ao lado o que "+
+          "o manômetro marcar para ver quanto ainda falta."
+        : (falta>5
+          ? "Ainda faltam <b>"+Math.round(falta)+" psi</b> presos no líquido e no bicarbonato. "+
+            "Agite em ciclos: enquanto cada ciclo render mais de 5 psi, vale continuar."
+          : "Chegou ao fim da reação. Agitar mais não rende — o ganho por ciclo já caiu "+
+            "abaixo de 5 psi.");
+    } else {
+      g("folga").innerHTML="A pressão cai de <b>"+S.bomba+"</b> para <b>"+
+        Math.round(r.pFim)+" psi</b> no momento em que a água acaba.";
+    }
+
+    // alerta de limite da garrafa, em destaque
+    var al=g("alertaLim"), estoura=q?(r.psiTeto>S.lim):(S.bomba>S.lim);
+    al.hidden=!estoura;
+    if(estoura){
+      al.innerHTML="<b>Pare — passa do limite da garrafa</b><span>"+
+        (q ? "Esta carga pode chegar a "+Math.round(r.psiTeto)+" psi e a garrafa aguenta "+
+             S.lim+" psi. Agitando até o fim, ela estoura. Reduza o vinagre ou o bicarbonato "+
+             "antes de montar."
+           : "A bomba está em "+S.bomba+" psi e a garrafa aguenta "+S.lim+" psi.")+"</span>";
+    }
+
+    ["rAcid","rCO2","rStoi"].forEach(function(id){g(id).hidden=!q;});
+    if(q){
+      g("oAcid").innerHTML=n1(r.gAcido)+" g<span class='sub'>"+n2(r.nAcido)+" mol</span>";
+      g("oCO2").innerHTML=n2(r.nCO2)+" mol<span class='sub'>limitado pelo "+r.limitante+"</span>";
+      g("oStoi").innerHTML=Math.round(r.stoich)+" g<span class='sub'>"+
+        (r.excesso>=0?"sobram "+Math.round(r.excesso)+" g":"faltam "+Math.round(-r.excesso)+" g")+"</span>";
+    }
+    g("oGas").innerHTML=Math.round(r.vGas)+" mL<span class='sub'>"+Math.round(r.vazio)+
+      " na garrafa + "+Math.round(r.morto)+" no cano</span>";
+    g("oMorto").innerHTML=Math.round(r.morto)+" mL<span class='sub'>"+
+      Math.round(r.morto/r.vGas*100)+"% do gás total</span>";
+    g("oEnch").textContent=Math.round(r.ench)+"%";
+    g("oMassa").innerHTML=Math.round(r.massa)+" g<span class='sub'>"+S.seco+" seco + "+
+      Math.round(r.liquido*1.005)+" líquido"+(q?" + "+S.bic+" bicarb.":"")+"</span>";
+    g("oEner").innerHTML=Math.round(r.energia)+" J";
+    g("oEsp").innerHTML=Math.round(r.espec)+" J/kg<span class='sub'>maior é melhor</span>";
+    avisos(r);
+  }
+
+  // ---------------- ligações ----------------
+  function par(id, campo, dec){
+    var sl=g(id), nu=g(id+"N");
+    function aplica(v){
+      v=parseFloat(v); if(isNaN(v)) return;
+      v=Math.max(parseFloat(sl.min),Math.min(parseFloat(sl.max),v));
+      S[campo]=v; sl.value=v; nu.value=dec?v.toFixed(dec):v; render();
+    }
+    sl.addEventListener("input",function(){aplica(sl.value);});
+    nu.addEventListener("input",function(){
+      var v=parseFloat(nu.value); if(isNaN(v))return;
+      S[campo]=v; sl.value=v; render();
+    });
+    nu.addEventListener("blur",function(){aplica(nu.value);});
+  }
+  par("liq","liq"); par("acid","acidez",1); par("bic","bic"); par("temp","temp"); par("med","med");
+  par("bomba","bomba"); par("agua","agua"); par("npoli","npoli",2);
+  par("lim","lim"); par("cano","cano",1); par("con","con"); par("seco","seco");
+  par("cVi","cVi"); par("cCi","cCi",1); par("cVf","cVf"); par("cRet","cRet"); par("cTax","cTax");
+
+  function grupo(id,attr,campo,alvo,rot){
+    var box=g(id);
+    box.addEventListener("click",function(e){
+      var b=e.target.closest("button"); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll("button"),function(x){
+        x.setAttribute("aria-pressed",String(x===b));});
+      S[campo]=parseFloat(b.dataset[attr]);
+      if(alvo) g(alvo).textContent=rot(b);
+      render();
+    });
+  }
+  grupo("garrafa","g","garrafa",null,null);
+  grupo("bitola","d","bitola",null,null);
+
+  g("modos").addEventListener("click",function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    Array.prototype.forEach.call(this.querySelectorAll("button"),function(x){
+      x.setAttribute("aria-pressed",String(x===b));});
+    S.modo=b.dataset.modo; render();
+  });
+
+  g("cAplicar").addEventListener("click",function(){
+    var c=calcConc(); if(!(c.cFim>0))return;
+    S.acidez=Math.round(c.cFim*10)/10;
+    var sl=g("acid"), nu=g("acidN");
+    if(S.acidez>parseFloat(sl.max)){ sl.max=Math.ceil(S.acidez); nu.max=sl.max; }
+    if(S.acidez<parseFloat(sl.min)){ sl.min=Math.floor(S.acidez); nu.min=sl.min; }
+    sl.value=S.acidez; nu.value=S.acidez.toFixed(1);
+    document.querySelector('[data-modo="quim"]').click();
+  });
+
+  // ---------------- bancada de comparação ----------------
+  var rack=[];
+  function rotulo(){
+    return S.modo==="quim"
+      ? S.liq+" mL "+n1(S.acidez)+"% · "+S.bic+" g · "+(S.garrafa/1000).toFixed(1).replace(".",",")+" L"
+      : "ar "+S.bomba+" psi · "+S.agua+" mL · "+(S.garrafa/1000).toFixed(1).replace(".",",")+" L";
+  }
+  function desenharRack(){
+    var el=g("rack");
+    if(!rack.length){
+      el.innerHTML='<p class="vazio">Nenhuma carga guardada. Monte uma configuração e use '+
+                   '<b>Guardar esta carga</b> para compará-la com outras aqui.</p>';
+      return;
+    }
+    var max=Math.max.apply(null,rack.map(function(c){return c.espec;}));
+    var ord=rack.slice().sort(function(a,b){return b.espec-a.espec;});
+    el.innerHTML=ord.map(function(c,i){
+      return '<div class="carta'+(i===0?' lider':'')+'">'+
+        '<button class="x" data-id="'+c.id+'" aria-label="Remover">&#215;</button>'+
+        '<div class="pos">'+(i===0?"melhor índice":(i+1)+"º")+'</div>'+
+        '<div class="cfg">'+c.cfg+'</div>'+
+        '<div><span class="psi">'+Math.round(c.psi)+'</span><span class="psiu">psi</span></div>'+
+        '<div class="barra"><i style="width:'+(max>0?c.espec/max*100:0).toFixed(0)+'%"></i></div>'+
+        '<div class="idx">'+Math.round(c.espec)+' J/kg · '+Math.round(c.massa)+' g</div></div>';
+    }).join("");
+  }
+  g("btGuardar").addEventListener("click",function(){
+    var r=calcular();
+    rack.push({id:Date.now()+Math.random(), cfg:rotulo(), psi:r.psiReal,
+               espec:r.espec, massa:r.massa});
+    desenharRack();
+  });
+  g("rack").addEventListener("click",function(e){
+    var b=e.target.closest(".x"); if(!b)return;
+    rack=rack.filter(function(c){return String(c.id)!==b.dataset.id;});
+    desenharRack();
+  });
+  g("btLimparRack").addEventListener("click",function(){
+    if(rack.length&&confirm("Remover todas as cargas guardadas?")){rack=[];desenharRack();}
+  });
+
+  // ---------------- ficha ----------------
+  var log=[];
+  function desenharLog(){
+    var tb=g("corpoLog");
+    if(!log.length){tb.innerHTML='<tr><td colspan="5" class="vazio">Nenhum tiro registrado</td></tr>';return;}
+    tb.innerHTML=log.map(function(t,i){
+      return "<tr><td>"+(i+1)+"</td><td>"+t.cfg+"</td><td>"+t.psi+"</td><td>"+
+             t.alc+"</td><td>"+t.idx+"</td></tr>";}).join("");
+  }
+  g("btAdd").addEventListener("click",function(){
+    var r=calcular();
+    var psi=prompt("Pressão que o manômetro marcou (psi):",Math.round(r.psiReal));
+    if(psi===null)return;
+    var alc=prompt("Alcance medido (metros):","");
+    if(alc===null)return;
+    log.push({cfg:rotulo(),psi:psi,alc:alc,idx:Math.round(r.espec)});
+    desenharLog();
+  });
+  g("btCopy").addEventListener("click",function(){
+    if(!log.length){alert("Nenhum tiro registrado ainda.");return;}
+    var txt="FICHA DE CAMPO — COVAFOG\n\n"+log.map(function(t,i){
+      return (i+1)+") "+t.cfg+" — "+t.psi+" psi — "+t.alc+" m — "+t.idx+" J/kg";}).join("\n");
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){alert("Ficha copiada.");},
+        function(){prompt("Copie o texto:",txt);});
+    } else prompt("Copie o texto:",txt);
+  });
+  g("btImp").addEventListener("click",function(){window.print();});
+  g("btClear").addEventListener("click",function(){
+    if(log.length&&confirm("Apagar todos os tiros registrados?")){log=[];desenharLog();}
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
