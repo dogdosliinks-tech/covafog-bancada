@@ -1,6 +1,6 @@
 // COVAFOG — Bancada: service worker só para funcionar offline depois de instalada.
 // Guarda apenas os arquivos do próprio app. Não guarda nem envia dado nenhum de quem usa.
-const CACHE = 'bancada-covafog-v1';
+const CACHE = 'bancada-covafog-v2';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
